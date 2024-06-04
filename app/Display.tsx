@@ -1,6 +1,6 @@
 import React from 'react'
 import Pixel from "./Pixel";
-import './Display.css'
+import './Display.scss'
 
 export default function Display(props: {value: string}) {
     const individuum = props.value;
