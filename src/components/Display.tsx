@@ -1,9 +1,8 @@
-import React from 'react'
-import Pixel from "./Pixel";
 import './Display.scss'
+import Pixel from './Pixel';
 
 export default function Display(props: {value: string}) {
-    const individuum = props.value;
+  const individuum = props.value;
   const width = Math.floor(Math.pow(individuum.length, 0.5));
 
   return (
@@ -14,6 +13,5 @@ export default function Display(props: {value: string}) {
         )
       }
     </div>
-
   )
 }
