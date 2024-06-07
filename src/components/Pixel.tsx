@@ -1,8 +1,8 @@
 import React from 'react'
 
-export default function Pixel(props: {value: string}) {
-  const color = props.value === "0" ? "white" : "black";
+export default function Pixel(props: {value: number}) {
+  const greyTone = props.value * 255;
   return (
-    <div className={`pixel ${color}`}></div>
+    <div className='pixel' style={{ backgroundColor: `rgb(${greyTone}, ${greyTone}, ${greyTone})` }}></div>
   )
 }

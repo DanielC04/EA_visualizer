@@ -1,7 +1,7 @@
 import './Display.scss'
 import Pixel from './Pixel';
 
-export default function Display(props: {value: string, displayWidth: number}) {
+export default function Display(props: {value: Array<number>, displayWidth: number}) {
   const individuum = props.value;
   const displayWidth = props.displayWidth;
 
@@ -16,7 +16,7 @@ export default function Display(props: {value: string, displayWidth: number}) {
       <div className="display" style={styles}>
       {
         [...Array(individuum.length)].map((_, i) => 
-          <Pixel key={i} value={individuum.charAt(i)} />
+          <Pixel key={i} value={individuum[i]} />
         )
       }
     </div>

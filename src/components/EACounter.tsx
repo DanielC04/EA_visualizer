@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { oneMax, randomLocalSearchStep } from '../logic/Simple_EA';
+import { OptimizationAlgo, TestFunction } from '../logic/Simple_EA';
 import Display from './Display';
 import { generateRandomIndividuum } from '../logic/helpers';
 import './EACounter.scss'
-import { flushSync } from 'react-dom';
 
 const clamp = (min: number, val: number, max: number) => Math.min(max, Math.max(min, val))
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export default function EACounter() {
+export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, testFunction: TestFunction, algoName: string}) {
   const [displaySize, updateDisplaySize] = useState(20);
   const [individuum, updateIndividuum_raw] = useState(generateRandomIndividuum(displaySize * displaySize));
   const [count, updateCount] = useState(0);
   const [isWorking, setIsWorking] = useState(false);
-  const  updateIndividuum = (newIndividuum: string, counterIncrement=1) => {
+
+  const  updateIndividuum = (newIndividuum: Array<number>, counterIncrement=1) => {
     updateIndividuum_raw(newIndividuum);
     updateCount(count + counterIncrement);
   }
@@ -21,30 +21,37 @@ export default function EACounter() {
   // button functions
   const makeNSteps = (n=1000) => {
     let newIndividuum = individuum;
-    for (let i = 0; i < 1000; i ++) {
-        newIndividuum = randomLocalSearchStep(newIndividuum, oneMax);
+    for (let i = 0; i < n; i ++) {
+        newIndividuum = props.optimizationAlgo(newIndividuum, props.testFunction)[0];
     }
-    updateIndividuum(newIndividuum, 1000);
+    updateIndividuum(newIndividuum, n);
   }
   const reset = () => {
     updateIndividuum(generateRandomIndividuum(displaySize * displaySize))
     updateCount(0);
   }
-  const countSteps = async (isAnimated=true, delay=0.1) => {
-    const testFunction = oneMax;
+  const countSteps = async (isAnimated=true, delay=1) => {
+    const testFunction = props.testFunction;
     setIsWorking(true);
     // as long as maximum of oneMax isn't reached 
     // - TODO what is the maximum of other functions?
     //  -> kind of harder to tell 
     //  -> maybe stop when no more improvement can be noticed for N steps
     let stepsNeeded = count;
+    let oldIndividuum;
     let newIndividuum = individuum;
+    let didChangeIndividuum;
     while(testFunction(newIndividuum) < individuum.length) {
-        newIndividuum = randomLocalSearchStep(newIndividuum, testFunction);
-        if (isAnimated && (newIndividuum !== individuum)){
+        oldIndividuum = newIndividuum;
+        [newIndividuum, didChangeIndividuum] = props.optimizationAlgo(oldIndividuum, testFunction);
+        if (isAnimated && didChangeIndividuum){
             updateCount(stepsNeeded);
             updateIndividuum_raw(newIndividuum);
             await sleep(delay);
+        }
+        if (stepsNeeded % 50000 === 0){
+          updateCount(stepsNeeded);
+          await sleep(.01);
         }
         stepsNeeded ++;
     }
@@ -60,28 +67,32 @@ export default function EACounter() {
   }, [displaySize])
 
   return (
-    <>
+    <div className='ea-counter'>
+      <h2>EA Counter - {props.algoName}</h2>
       <Display  value={individuum} displayWidth={displaySize} />
       <ul className='info-display'>
         <li>
             <label htmlFor="display-size">Size of the Display</label>
             <input type="number" name="display-size" id="display-size" value={displaySize} onChange={(e) => {
-                updateDisplaySize(clamp(1, Number.parseInt(e.target.value), 150));
-                updateCount(0);
+                updateDisplaySize(clamp(2, Number.parseInt(e.target.value), 100) ?? 2);
+                // updateCount(0);
             }}/>
         </li>
         <li>Count: {count}</li>
         <div className={`controls ${isWorking ? 'greyed-out': ''}`}>
-            <button onClick={() => !isWorking && updateIndividuum(randomLocalSearchStep(individuum, oneMax))}>Step</button>
+            <button onClick={() => !isWorking && makeNSteps(1)}>Step</button>
             <button onClick={() => !isWorking && makeNSteps(1000)}>1000 Steps</button>
-            <div className='animation-button-box'>
-                <span>Count number of needed iterations</span>
-                <button onClick={() => !isWorking && countSteps(true)}>With animation</button>
-                <button onClick={() => !isWorking && countSteps(false)}>Without animation</button>
-            </div>
+            {
+              props.algoName !== "Needle" &&
+              <div className='animation-button-box'>
+                  <span>Count number of needed iterations</span>
+                  <button onClick={() => !isWorking && countSteps(true)}>With animation</button>
+                  <button onClick={() => !isWorking && countSteps(false)}>Without animation</button>
+              </div>
+            }
             <button onClick={() => !isWorking && reset()}>Reset</button>
         </div>
       </ul>
-    </>
+    </div>
   )
 }
