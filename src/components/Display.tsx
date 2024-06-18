@@ -1,7 +1,7 @@
 import './Display.scss'
 import Pixel from './Pixel';
 
-export default function Display(props: {value: Array<number>, displayWidth: number}) {
+export default function Display(props: {value: Array<boolean>, displayWidth: number}) {
   const individuum = props.value;
   const displayWidth = props.displayWidth;
 

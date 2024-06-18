@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { OptimizationAlgo, TestFunction } from '../logic/Simple_EA';
+import { OptimizationAlgo, TestFunction, needle } from '../logic/Simple_EA';
 import Display from './Display';
 import { generateRandomIndividuum } from '../logic/helpers';
 import './EACounter.scss'
@@ -9,11 +9,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, testFunction: TestFunction, algoName: string}) {
   const [displaySize, updateDisplaySize] = useState(20);
-  const [individuum, updateIndividuum_raw] = useState(generateRandomIndividuum(displaySize * displaySize));
+  const [individuum, updateIndividuum_raw] = useState(generateRandomIndividuum(displaySize * displaySize) as boolean[]);
   const [count, updateCount] = useState(0);
   const [isWorking, setIsWorking] = useState(false);
 
-  const  updateIndividuum = (newIndividuum: Array<number>, counterIncrement=1) => {
+  const  updateIndividuum = (newIndividuum: Array<boolean>, counterIncrement=1) => {
     updateIndividuum_raw(newIndividuum);
     updateCount(count + counterIncrement);
   }
@@ -27,7 +27,7 @@ export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, t
     updateIndividuum(newIndividuum, n);
   }
   const reset = () => {
-    updateIndividuum(generateRandomIndividuum(displaySize * displaySize))
+    updateIndividuum(generateRandomIndividuum(displaySize * displaySize) as boolean[])
     updateCount(0);
   }
   const countSteps = async (isAnimated=true, delay=1) => {
@@ -41,7 +41,9 @@ export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, t
     let oldIndividuum;
     let newIndividuum = individuum;
     let didChangeIndividuum;
-    while(testFunction(newIndividuum) < individuum.length) {
+    let optimalScore = individuum.length;
+    if (props.testFunction === needle) optimalScore = 1;
+    while(testFunction(newIndividuum) < optimalScore) {
         oldIndividuum = newIndividuum;
         [newIndividuum, didChangeIndividuum] = props.optimizationAlgo(oldIndividuum, testFunction);
         if (isAnimated && didChangeIndividuum){
@@ -51,6 +53,7 @@ export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, t
         }
         if (stepsNeeded % 50000 === 0){
           updateCount(stepsNeeded);
+          updateIndividuum_raw(newIndividuum);
           await sleep(.01);
         }
         stepsNeeded ++;
@@ -63,19 +66,19 @@ export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, t
   }
 
   useEffect(() => {
-    updateIndividuum(generateRandomIndividuum(displaySize * displaySize), 0);
+    updateIndividuum(generateRandomIndividuum(displaySize * displaySize) as boolean[], 0);
   }, [displaySize])
 
   return (
     <div className='ea-counter'>
-      <h2>EA Counter - {props.algoName}</h2>
+      <h2>{props.algoName}</h2>
       <Display  value={individuum} displayWidth={displaySize} />
       <ul className='info-display'>
         <li>
             <label htmlFor="display-size">Size of the Display</label>
             <input type="number" name="display-size" id="display-size" value={displaySize} onChange={(e) => {
-                updateDisplaySize(clamp(2, Number.parseInt(e.target.value), 100) ?? 2);
-                // updateCount(0);
+                updateDisplaySize(clamp(1, Number.parseInt(e.target.value), 60) ?? 2);
+                updateCount(0);
             }}/>
         </li>
         <li>Count: {count}</li>
