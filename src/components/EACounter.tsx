@@ -30,7 +30,7 @@ export default function EACounter(props: { optimizationAlgo: OptimizationAlgo, t
     updateIndividuum(generateRandomIndividuum(displaySize * displaySize) as boolean[])
     updateCount(0);
   }
-  const countSteps = async (isAnimated=true, delay=1) => {
+  const countSteps = async (isAnimated=true, delay=0.1) => {
     const testFunction = props.testFunction;
     setIsWorking(true);
     // as long as maximum of oneMax isn't reached 
